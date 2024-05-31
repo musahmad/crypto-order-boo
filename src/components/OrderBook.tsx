@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import React, { useCallback, useState } from 'react';
+import moment from 'moment'
+import { AgGridReact } from 'ag-grid-react';
+import { Box, Grid, Typography } from '@mui/material';
+import { ColDef } from 'ag-grid-community';
 import { OrderBookData } from '../types';
-import moment from 'moment';
+import useWebSocket from '../hooks/useWebsocket';
+import './css/ag-grid-theme-builder.css';
 
 interface OrderBookProps {
   selectedCoin: string;
@@ -12,35 +16,15 @@ const OrderBook: React.FC<OrderBookProps> = ({ selectedCoin, selectedExchange })
   const [orderBook, setOrderBook] = useState<OrderBookData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    console.log('Effect triggered with coin:', selectedCoin, 'and exchange:', selectedExchange);
-    const ws = new WebSocket('wss://mock.lo.tech:8443/ws/orderbook');
-
-    ws.onopen = () => {
-      console.log('Connected to WebSocket');
-    };
-
-    ws.onmessage = (event) => {
-      const data: OrderBookData = JSON.parse(event.data);
-      if (data.coin === selectedCoin && data.exchange === selectedExchange) {
-        setOrderBook(data);
-        setLoading(false);
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    ws.onclose = () => {
-      console.log('Disconnected from WebSocket');
-    };
-
-    return () => {
-      ws.close();
-    };
+  const handleMessage = useCallback((data: OrderBookData) => {
+    if (data.coin === selectedCoin && data.exchange === selectedExchange) {
+      setOrderBook(data);
+      setLoading(false);
+    }
   }, [selectedCoin, selectedExchange]);
 
+  useWebSocket('wss://mock.lo.tech:8443/ws/orderbook', handleMessage);
+  
   if (loading) {
     return <p>Loading...</p>;
   }
@@ -54,55 +38,46 @@ const OrderBook: React.FC<OrderBookProps> = ({ selectedCoin, selectedExchange })
     return date.format("HH.mm.ss.SSS")
   }
 
+  const bidsColumnDefs: ColDef[] = [
+    { headerName: 'Price', field: 'price' },
+    { headerName: 'Quantity', field: 'quantity' },
+    { headerName: 'Time', field: 'timestamp' },
+  ];
+
+  const asksColumnDefs: ColDef[] = [
+    { headerName: 'Price', field: 'price' },
+    { headerName: 'Quantity', field: 'quantity' },
+    { headerName: 'Time', field: 'timestamp' },
+  ];
+
+  const bidsRowData = orderBook.bids.map((bid) => ({
+    timestamp: formatTimestamp(orderBook.timestamp),
+    price: bid[0],
+    quantity: bid[1],
+  }));
+
+  const asksRowData = orderBook.asks.map((ask) => ({
+    timestamp: formatTimestamp(orderBook.timestamp),
+    price: ask[0],
+    quantity: ask[1],
+  }));
+
   return (
     <div>
-      <h2>Order Book for {selectedCoin} on {selectedExchange}</h2>
       <Grid container spacing={3}>
         <Grid item xs={6}>
-          <h3>Bids</h3>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Price</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Time</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {orderBook.bids.map((bid, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{bid[0]}</TableCell>
-                    <TableCell>{bid[1]}</TableCell>
-                    <TableCell>{formatTimestamp(orderBook.timestamp)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <Box sx={{textAlign: "center", color: "#fff", backgroundColor:"#2f486f", borderRadius: 2, marginBlockEnd: 0.5}}><Typography variant='overline' fontSize={15} gutterBottom fontWeight={600}>Bids</Typography></Box>
+          
+          <div className="ag-theme-custom" style={{ height: 270, width: '100%' }}>
+            <AgGridReact columnDefs={bidsColumnDefs} rowData={bidsRowData} />
+          </div>
         </Grid>
         <Grid item xs={6}>
-          <h3>Asks</h3>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Price</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Time</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {orderBook.asks.map((ask, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{ask[0]}</TableCell>
-                    <TableCell>{ask[1]}</TableCell>
-                    <TableCell>{formatTimestamp(orderBook.timestamp)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+        <Box sx={{textAlign: "center", color: "#fff", backgroundColor:"#2f486f", borderRadius: 2, marginBlockEnd: 0.5}}><Typography variant='overline' fontSize={15} gutterBottom fontWeight={600}>Asks</Typography></Box>
+          
+          <div className="ag-theme-custom" style={{ height: 270, width: '100%' }}>
+            <AgGridReact columnDefs={asksColumnDefs} rowData={asksRowData} />
+          </div>
         </Grid>
       </Grid>
     </div>

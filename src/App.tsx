@@ -3,6 +3,7 @@ import { Container } from '@mui/material';
 import CoinSelector from './components/CoinSelector';
 import OrderBook from './components/OrderBook';
 import { SelectChangeEvent } from '@mui/material/Select';
+import ExchangeView from './components/ExchangeView';
 
 const coins = ['BTC/USD', 'ETH/USD', 'LTC/USD', 'XRP/USD', 'DOGE/USD'];
 const exchanges = ['ExchangeX', 'ExchangeY'];
@@ -30,6 +31,7 @@ function App() {
         coins={coins}
         exchanges={exchanges}
       />
+      <ExchangeView/>
       <OrderBook selectedCoin={selectedCoin} selectedExchange={selectedExchange} />
     </Container>
   );
