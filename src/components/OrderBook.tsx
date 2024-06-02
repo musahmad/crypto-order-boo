@@ -5,7 +5,7 @@ import { Box, Grid, Typography } from "@mui/material";
 import { ColDef } from "ag-grid-community";
 import { OrderBookData } from "../types";
 import useWebSocket from "../hooks/useWebsocket";
-import "./css/ag-grid-theme-builder.css";
+import "./css/ag-grid-order-book-theme.css";
 
 interface OrderBookProps {
   selectedCoin: string;
@@ -92,10 +92,10 @@ const OrderBook: React.FC<OrderBookProps> = ({
           </Box>
 
           <div
-            className="ag-theme-alpine"
+            className="ag-theme-order-book"
             style={{ height: 270, width: "100%" }}
           >
-            <AgGridReact columnDefs={bidsColumnDefs} rowData={bidsRowData} />
+            <AgGridReact columnDefs={bidsColumnDefs} rowData={bidsRowData} defaultColDef={{ flex: 1}}/>
           </div>
         </Grid>
         <Grid item xs={6}>
@@ -119,10 +119,10 @@ const OrderBook: React.FC<OrderBookProps> = ({
           </Box>
 
           <div
-            className="ag-theme-alpine"
-            style={{ height: 270, width: "100%" }}
+            className="ag-theme-order-book"
+            style={{ height: 320, width: "100%" }}
           >
-            <AgGridReact columnDefs={asksColumnDefs} rowData={asksRowData} />
+            <AgGridReact columnDefs={asksColumnDefs} rowData={asksRowData} defaultColDef={{ flex: 1}}/>
           </div>
         </Grid>
       </Grid>

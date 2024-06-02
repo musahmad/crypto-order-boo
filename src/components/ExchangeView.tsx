@@ -1,14 +1,13 @@
 // ExchangeView.tsx
 import React, { useState, useCallback, useEffect } from "react";
 import { AgGridReact } from "ag-grid-react";
-import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-alpine.css";
 import { ColDef } from "ag-grid-community";
 import { SparklinesModule } from "@ag-grid-enterprise/sparklines";
 
 import useWebSocket from "../hooks/useWebsocket";
 import { OrderBookData } from "../types";
 import { ModuleRegistry } from "ag-grid-enterprise";
+import "./css/ag-grid-exchange-theme.css"
 
 ModuleRegistry.registerModules([SparklinesModule]);
 
@@ -88,12 +87,7 @@ const ExchangeView: React.FC<ExchangeViewProps> = ({ selectedExchange }) => {
         backgroundColor: "#2f486f",
         color: "#fff",
       },
-      width: 120
-    },
-    { headerName: "Latest Bid", field: "latestBid" },
-    { headerName: "Latest Ask", field: "latestAsk" },
-    { headerName: "Highest Bid", field: "highestBid" },
-    { headerName: "Lowest Ask", field: "lowestAsk" },
+      },
     {
       headerName: "Bid Timeline",
       field: "bidTimeline",
@@ -102,28 +96,32 @@ const ExchangeView: React.FC<ExchangeViewProps> = ({ selectedExchange }) => {
         sparklineOptions: {},
       },
     },
+    { headerName: "Latest Bid", field: "latestBid", },
+    { headerName: "Highest Bid", field: "highestBid", },
     {
       headerName: "Ask Timeline",
       field: "askTimeline",
       cellRenderer: "agSparklineCellRenderer",
-      cellRendererParams: {
-        sparklineOptions: {
-          type: "column",
-          bar: {
-            fill: "#ff4b4b",
-            stroke: "#ff4b4b",
+      // cellRendererParams: {
+        //   sparklineOptions: {
+          //     type: "column",
+          //     bar: {
+            //       fill: "#ff4b4b",
+            //       stroke: "#ff4b4b",
+            //     },
+            //   },
+            // },
           },
-        },
-      },
-    },
+          { headerName: "Latest Ask", field: "latestAsk", },
+          { headerName: "Lowest Ask", field: "lowestAsk", },
   ];
 
   const rowData = Object.values(coins);
 
   return (
     <div style={{ marginTop: 20, marginBottom: 20 }}>
-      <div className="ag-theme-alpine" style={{ height: 300, width: "100%" }}>
-        <AgGridReact columnDefs={columnDefs} rowData={rowData} />
+      <div className="ag-theme-exchange" style={{ height: 318, width: "100%" }}>
+        <AgGridReact columnDefs={columnDefs} rowData={rowData} defaultColDef={{ flex: 1}}/>
       </div>
     </div>
   );
