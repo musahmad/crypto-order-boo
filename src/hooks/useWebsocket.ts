@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 type MessageHandler = (data: any) => void;
 
@@ -9,7 +9,7 @@ const useWebSocket = (url: string, onMessage: MessageHandler) => {
     ws.current = new WebSocket(url);
 
     ws.current.onopen = () => {
-      console.log('Connected to WebSocket:', url);
+      console.log("Connected to WebSocket:", url);
     };
 
     ws.current.onmessage = (event) => {
@@ -18,11 +18,11 @@ const useWebSocket = (url: string, onMessage: MessageHandler) => {
     };
 
     ws.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error("WebSocket error:", error);
     };
 
     ws.current.onclose = () => {
-      console.log('Disconnected from WebSocket:', url);
+      console.log("Disconnected from WebSocket:", url);
     };
 
     return () => {

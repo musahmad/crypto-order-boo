@@ -1,5 +1,11 @@
-import React from 'react';
-import { FormControl, InputLabel, Select, MenuItem, SelectChangeEvent } from '@mui/material';
+import React from "react";
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+} from "@mui/material";
 
 interface CoinSelectorProps {
   selectedCoin: string;
@@ -16,7 +22,7 @@ const CoinSelector: React.FC<CoinSelectorProps> = ({
   onCoinChange,
   onExchangeChange,
   coins,
-  exchanges
+  exchanges,
 }) => {
   return (
     <div>
