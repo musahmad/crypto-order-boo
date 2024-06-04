@@ -1,35 +1,21 @@
 // ExchangeView.tsx
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ColDef } from "ag-grid-community";
 import { SparklinesModule } from "@ag-grid-enterprise/sparklines";
 
 import useWebSocket from "../hooks/useWebsocket";
 import { OrderBookData } from "../types";
-import { ModuleRegistry } from "ag-grid-enterprise";
-import "./css/ag-grid-exchange-theme.css"
+import { GridApi, ModuleRegistry } from "ag-grid-enterprise";
+import "./css/ag-grid-exchange-theme.css";
 
 ModuleRegistry.registerModules([SparklinesModule]);
-
-interface StockData {
-  coin: string;
-  latestBid: number;
-  highestBid: number;
-  bidTimeline: number[];
-  latestAsk: number;
-  lowestAsk: number;
-  askTimeline: number[];
-}
 
 interface ExchangeViewProps {
   selectedExchange: string;
 }
 const ExchangeView: React.FC<ExchangeViewProps> = ({ selectedExchange }) => {
-  const [coins, setCoins] = useState<Record<string, StockData>>({});
-
-  useEffect(() => {
-    setCoins({});
-  }, [selectedExchange]);
+  const exchangeGridApiRef = useRef<GridApi | null>(null);
 
   const handleMessage = useCallback(
     (data: OrderBookData) => {
@@ -37,91 +23,84 @@ const ExchangeView: React.FC<ExchangeViewProps> = ({ selectedExchange }) => {
         return;
       }
 
-      setCoins((prevCoins) => {
-        const latestBidPrice = data.bids.length > 0 ? data.bids[0][0] : 0; // Latest highest bid price
-        const highestBidPrice = Math.max(
-          ...data.bids.map((bid) => bid[0]), // Extract bid prices and find the maximum
-          prevCoins[data.coin]?.highestBid || 0, // Compare with previous highest price
-        );
-        const latestAskPrice =
-          data.asks.length > 0 ? data.asks[0][0] : Infinity; // Latest highest bid price
-        const lowestAskPrice = Math.min(
-          ...data.asks.map((bid) => bid[0]), // Extract bid prices and find the maximum
-          prevCoins[data.coin]?.lowestAsk || Infinity, // Compare with previous highest price
-        );
+      if (exchangeGridApiRef.current) {
+        const currentRow = exchangeGridApiRef.current.getRowNode(data.coin);
 
-        const coin = prevCoins[data.coin] || {
+        const newRow = {
           coin: data.coin,
-          latestBid: 0,
-          highestBid: 0,
-          bidTimeline: [],
-          latestAsk: 0,
-          lowestAsk: Infinity,
-          askTimeline: [],
+          latestBid: data.bids[0][0],
+          latestAsk: data.asks[0][0],
+          highestBid: Math.max(
+            currentRow?.data.highestBid || 0,
+            ...data.bids.map((bid) => bid[0]),
+          ),
+          lowestAsk: Math.min(
+            currentRow?.data.lowestAsk || Infinity,
+            ...data.asks.map((ask) => ask[0]),
+          ),
+          bidTimeline: [
+            ...(currentRow?.data.bidTimeline || []),
+            data.bids[0][0],
+          ].slice(-50),
+          askTimeline: [
+            ...(currentRow?.data.askTimeline || []),
+            data.asks[0][0],
+          ].slice(-50),
         };
 
-        const updatedCoin = {
-          ...coin,
-          latestBid: latestBidPrice,
-          highestBid: highestBidPrice,
-          bidTimeline: [...coin.bidTimeline, latestBidPrice * 1000].slice(-20),
-          latestAsk: latestAskPrice,
-          lowestAsk: lowestAskPrice,
-          askTimeline: [...coin.askTimeline, latestAskPrice * 1000].slice(-20),
-        };
-
-        return { ...prevCoins, [data.coin]: updatedCoin };
-      });
+        if (currentRow) {
+          exchangeGridApiRef.current.applyTransactionAsync({
+            update: [newRow],
+          });
+        } else {
+          exchangeGridApiRef.current.applyTransaction({ add: [newRow] });
+        }
+      }
     },
     [selectedExchange],
   );
 
   useWebSocket("wss://mock.lo.tech:8443/ws/orderbook", handleMessage);
 
+  const onExchangeGridReady = (params: any) => {
+    exchangeGridApiRef.current = params.api;
+  };
+
   const columnDefs: ColDef[] = [
     {
-      headerName: "Stock",
+      headerName: "Coin",
       field: "coin",
       cellStyle: {
         fontWeight: "bold",
         backgroundColor: "#2f486f",
         color: "#fff",
       },
-      },
+    },
     {
       headerName: "Bid Timeline",
       field: "bidTimeline",
       cellRenderer: "agSparklineCellRenderer",
-      cellRendererParams: {
-        sparklineOptions: {},
-      },
     },
-    { headerName: "Latest Bid", field: "latestBid", },
-    { headerName: "Highest Bid", field: "highestBid", },
+    { headerName: "Latest Bid", field: "latestBid" },
+    { headerName: "Highest Bid", field: "highestBid" },
     {
       headerName: "Ask Timeline",
       field: "askTimeline",
       cellRenderer: "agSparklineCellRenderer",
-      // cellRendererParams: {
-        //   sparklineOptions: {
-          //     type: "column",
-          //     bar: {
-            //       fill: "#ff4b4b",
-            //       stroke: "#ff4b4b",
-            //     },
-            //   },
-            // },
-          },
-          { headerName: "Latest Ask", field: "latestAsk", },
-          { headerName: "Lowest Ask", field: "lowestAsk", },
+    },
+    { headerName: "Latest Ask", field: "latestAsk" },
+    { headerName: "Lowest Ask", field: "lowestAsk" },
   ];
-
-  const rowData = Object.values(coins);
 
   return (
     <div style={{ marginTop: 20, marginBottom: 20 }}>
-      <div className="ag-theme-exchange" style={{ height: 318, width: "100%" }}>
-        <AgGridReact columnDefs={columnDefs} rowData={rowData} defaultColDef={{ flex: 1}}/>
+      <div className="ag-theme-exchange" style={{ height: 275, width: "100%" }}>
+        <AgGridReact
+          columnDefs={columnDefs}
+          onGridReady={onExchangeGridReady}
+          defaultColDef={{ flex: 1 }}
+          getRowId={(params) => params.data.coin}
+        />
       </div>
     </div>
   );

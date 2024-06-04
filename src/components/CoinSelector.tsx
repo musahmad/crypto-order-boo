@@ -26,7 +26,7 @@ const CoinSelector: React.FC<CoinSelectorProps> = ({
 }) => {
   return (
     <div>
-      <FormControl fullWidth>
+      <FormControl>
         <InputLabel id="coin-label">Coin</InputLabel>
         <Select
           labelId="coin-label"
@@ -41,7 +41,7 @@ const CoinSelector: React.FC<CoinSelectorProps> = ({
           ))}
         </Select>
       </FormControl>
-      <FormControl fullWidth>
+      <FormControl>
         <InputLabel id="exchange-label">Exchange</InputLabel>
         <Select
           labelId="exchange-label"

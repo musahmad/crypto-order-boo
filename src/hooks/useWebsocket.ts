@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
+import { OrderBookData } from "../types";
 
-type MessageHandler = (data: any) => void;
+type MessageHandler = (data: OrderBookData) => void;
 
 const useWebSocket = (url: string, onMessage: MessageHandler) => {
   const ws = useRef<WebSocket | null>(null);
