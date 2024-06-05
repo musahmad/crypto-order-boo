@@ -2,7 +2,15 @@
 
 CryptX is a Crypto order book viewer using the lo.tech WebSocket
 
+<img src="screenshot.png" alt="screenshot" width="500">
+
 ## Usage
+
+To initially install the dependencies, run the following:
+
+```bash
+npm install
+```
 
 To start the React application, run the following:
 
@@ -13,6 +21,7 @@ npm start
 ## Technology choices
 
 I made use of the following front-end technologies to complete this project:
+
 
 1. React/Typescript:
 
