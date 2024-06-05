@@ -1,24 +1,21 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import moment from "moment";
 import { AgGridReact } from "ag-grid-react";
 import { Box, Grid, Typography } from "@mui/material";
 import { ColDef } from "ag-grid-community";
 import { OrderBookData } from "../types";
-import useWebSocket from "../hooks/useWebsocket";
 import "./css/ag-grid-order-book-theme.css";
 import { GridApi } from "ag-grid-enterprise";
 
 interface OrderBookProps {
   selectedCoin: string;
-  selectedExchange: string;
+  data: OrderBookData | undefined;
 }
 
 const OrderBook: React.FC<OrderBookProps> = ({
   selectedCoin,
-  selectedExchange,
+  data,
 }) => {
-  const [loading, setLoading] = useState<boolean>(true);
-
   const formatTimestamp = (timestamp: number) => {
     const date: moment.Moment = moment(timestamp * 1000);
     return date.format("HH.mm.ss.SSS");
@@ -27,39 +24,34 @@ const OrderBook: React.FC<OrderBookProps> = ({
   const bidsGridApiRef = useRef<GridApi | null>(null);
   const asksGridApiRef = useRef<GridApi | null>(null);
 
-  const handleMessage = useCallback(
-    (data: OrderBookData) => {
-      if (data.coin === selectedCoin && data.exchange === selectedExchange) {
-        setLoading(false);
+  useEffect(() => {
+    if (data && data.coin === selectedCoin) {
+      const bidsRowData = data.bids.map((bid, idx) => ({
+        index: idx,
+        timestamp: formatTimestamp(data.timestamp),
+        price: bid[0],
+        quantity: bid[1],
+      }));
 
-        const bidsRowData = data.bids.map((bid, idx) => ({
-          index: idx,
-          timestamp: formatTimestamp(data.timestamp),
-          price: bid[0],
-          quantity: bid[1],
-        }));
+      const asksRowData = data.asks.map((ask, idx) => ({
+        index: idx,
+        timestamp: formatTimestamp(data.timestamp),
+        price: ask[0],
+        quantity: ask[1],
+      }));
 
-        const asksRowData = data.asks.map((ask, idx) => ({
-          index: idx,
-          timestamp: formatTimestamp(data.timestamp),
-          price: ask[0],
-          quantity: ask[1],
-        }));
-
-        if (asksGridApiRef.current && bidsGridApiRef.current) {
+      if (asksGridApiRef.current && bidsGridApiRef.current) {
+        const isPopulated = asksGridApiRef.current.getRowNode("0");
+        if (isPopulated) {
           bidsGridApiRef.current.applyTransactionAsync({ update: bidsRowData });
           asksGridApiRef.current.applyTransactionAsync({ update: asksRowData });
+        } else {
+          bidsGridApiRef.current.applyTransaction({ add: bidsRowData });
+          asksGridApiRef.current.applyTransaction({ add: asksRowData });
         }
       }
-    },
-    [selectedCoin, selectedExchange],
-  );
-
-  useWebSocket("wss://mock.lo.tech:8443/ws/orderbook", handleMessage);
-
-  if (loading) {
-    return <p>Loading...</p>;
-  }
+    }
+  }, [data, selectedCoin]);
 
   const onBidsGridReady = (params: any) => {
     bidsGridApiRef.current = params.api;
@@ -69,51 +61,59 @@ const OrderBook: React.FC<OrderBookProps> = ({
     asksGridApiRef.current = params.api;
   };
 
-  const bidsColumnDefs: ColDef[] = [
-    { headerName: "Price", field: "price" },
-    { headerName: "Quantity", field: "quantity" },
-    { headerName: "Time", field: "timestamp" },
-  ];
-
-  const asksColumnDefs: ColDef[] = [
+  const columnDefs: ColDef[] = [
     { headerName: "Price", field: "price" },
     { headerName: "Quantity", field: "quantity" },
     { headerName: "Time", field: "timestamp" },
   ];
 
   return (
-    <div>
-      <Grid container spacing={3}>
+    <div style={{ paddingLeft: 80, paddingRight: 80 }}>
+      <Box
+        sx={{
+          textAlign: "center",
+          color: "#fff",
+          backgroundColor: "#2f486f",
+          borderRadius: 2,
+          marginBlockEnd: 0.5,
+        }}
+      >
+        <Typography
+          variant="overline"
+          fontSize={15}
+          gutterBottom
+          fontWeight={600}
+        >
+          {selectedCoin}
+        </Typography>
+      </Box>
+      <Grid container spacing={1}>
         <Grid item xs={6}>
           <Box
             sx={{
               textAlign: "center",
               color: "#fff",
-              backgroundColor: "#2f486f",
-              borderRadius: 1,
+              backgroundColor: "#1d2632",
+              borderRadius: 2,
               marginBlockEnd: 0.5,
             }}
           >
-            <Typography
-              variant="overline"
-              fontSize={15}
-              gutterBottom
-              fontWeight={600}
-            >
+            <Typography fontSize={15} fontWeight={600}>
               Bids
             </Typography>
           </Box>
 
           <div
             className="ag-theme-order-book"
-            style={{ height: 275, width: "100%" }}
+            style={{ height: 185, width: "100%" }}
           >
             <AgGridReact
-              columnDefs={bidsColumnDefs}
+              columnDefs={columnDefs}
+              headerHeight={30}
+              rowHeight={30}
               defaultColDef={{ flex: 1 }}
               onGridReady={onBidsGridReady}
               getRowId={(params) => params.data.index}
-              rowData={Array.from({ length: 5 }, (_, i) => ({ index: i }))}
             />
           </div>
         </Grid>
@@ -122,31 +122,27 @@ const OrderBook: React.FC<OrderBookProps> = ({
             sx={{
               textAlign: "center",
               color: "#fff",
-              backgroundColor: "#2f486f",
-              borderRadius: 1,
+              backgroundColor: "#1d2632",
+              borderRadius: 2,
               marginBlockEnd: 0.5,
             }}
           >
-            <Typography
-              variant="overline"
-              fontSize={15}
-              gutterBottom
-              fontWeight={600}
-            >
+            <Typography fontSize={15} fontWeight={600}>
               Asks
             </Typography>
           </Box>
 
           <div
             className="ag-theme-order-book"
-            style={{ height: 275, width: "100%" }}
+            style={{ height: 185, width: "100%" }}
           >
             <AgGridReact
-              columnDefs={asksColumnDefs}
+              columnDefs={columnDefs}
+              headerHeight={30}
+              rowHeight={30}
               defaultColDef={{ flex: 1 }}
               onGridReady={onAsksGridReady}
               getRowId={(params) => params.data.index}
-              rowData={Array.from({ length: 5 }, (_, i) => ({ index: i }))}
             />
           </div>
         </Grid>

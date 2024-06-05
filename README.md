@@ -1,46 +1,45 @@
-# Getting Started with Create React App
+# CryptX
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+CryptX is a Crypto order book viewer using the lo.tech WebSocket
 
-## Available Scripts
+## Usage
 
-In the project directory, you can run:
+To start the React application, run the following:
 
-### `npm start`
+```bash
+npm start
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Technology choices
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+I made use of the following front-end technologies to complete this project:
 
-### `npm test`
+1. React/Typescript:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+    - Component based architecture promotes reusability of code
+    - Performance: Usage of virtual DOM enhances performance and allows for streaming real time data
+    - Type Safety
+    - Scalability
 
-### `npm run build`
+2. Material UI:
+    
+    - Pre built components that are well maintained and documented
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+3. AGGrid:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+    - High performance: AGGrid is the go to grid for high frequency updates, I have made use of particular features such as `.applyTransactionAsync()` which allows for efficient updating of the grid by applying update transactions in batches to relieve pressure on the browser
+    - AGGrid has many features built in that allow you to visualise information clearly and quickly. I have demonstrated a few in this project, namely sparklines, built-in sorting, value change animations and custom cell components
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+    
+## Assumptions
 
-### `npm run eject`
+- Data from the WebSocket provided will be of consistent shape, with bids and asks provided together for a given timestamp, coin and exchange. If the format of the data changes, we would need to change some of the front end logic
+- For this initial solution, I have hardcoded the exchanges for the ExchangeSelector component, assuming there is only Exchange X and Y. If further exchanges were to be added, I would update this dynamically, possibly using a dropdown if there were too many to fit in tabs.
+- I am allowed to use AI to create the logo :)
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## Ideas for improvement
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- Implement multiple order books - this would involve allowing multiple selection on the ExchangeView AGGrid, maybe with checkboxes and reusing the OrderBook component. Although the current solution does allow you to compare activity across multiple coins in an exchange through the ExchangeView, especially with the sparkline grids
+- On the backend, we could consider using Socket.IO to ensure automatic reconnection and event based communication. We could have handlers for each exchange/coin which would be easier and more efficient to subscribe to on the front end. 
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
